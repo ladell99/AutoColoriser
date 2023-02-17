@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)selenium.webdriver\4.8.0\build\Selenium.WebDriver.targets" Condition="Exists('$(NuGetPackageRoot)selenium.webdriver\4.8.0\build\Selenium.WebDriver.targets')" />
+    <Import Project="$(NuGetPackageRoot)autoitx.dotnet\3.3.14.5\build\AutoItX.Dotnet.targets" Condition="Exists('$(NuGetPackageRoot)autoitx.dotnet\3.3.14.5\build\AutoItX.Dotnet.targets')" />
+  </ImportGroup>
+</Project>

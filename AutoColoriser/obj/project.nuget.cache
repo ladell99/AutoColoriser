@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "uP5SACxk9Cav1DjdbDEEJkEhXqh96DPtem7F789eRApTdjAovTxwqa9yBY++T43gTaofnOIJewZNCkAnBjktDw==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\AdamLadell\\RiderProjects\\AutoColoriser\\AutoColoriser\\AutoColoriser.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\AdamLadell\\.nuget\\packages\\autoitx.dotnet\\3.3.14.5\\autoitx.dotnet.3.3.14.5.nupkg.sha512",
+    "C:\\Users\\AdamLadell\\.nuget\\packages\\phantomjs\\2.1.1\\phantomjs.2.1.1.nupkg.sha512",
+    "C:\\Users\\AdamLadell\\.nuget\\packages\\selenium.support\\4.8.0\\selenium.support.4.8.0.nupkg.sha512",
+    "C:\\Users\\AdamLadell\\.nuget\\packages\\selenium.webdriver\\4.8.0\\selenium.webdriver.4.8.0.nupkg.sha512"
+  ],
+  "logs": []
+}
