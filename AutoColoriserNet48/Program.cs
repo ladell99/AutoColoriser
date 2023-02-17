@@ -31,8 +31,6 @@ namespace AutoColoriserNet48
 
         private static ChromeDriver _chromeDriver;
         
-        // TODO: 3 at a time
-        
         static void Main(string[] args)
         {
             try
@@ -48,10 +46,29 @@ namespace AutoColoriserNet48
             
                 _chromeDriver.Manage().Timeouts().ImplicitWait = TimeSpan.MaxValue;
                 _chromeDriver.Manage().Timeouts().PageLoad = TimeSpan.MaxValue;
-            
-                UploadFiles(filePaths);
-                DownloadProcessedFiles();
-                ExtractProcessedFiles();
+                
+                for (var i = 0; i < filePaths.Length; i+= 3)
+                {
+                    Console.WriteLine($"Processing {3 + i} / {filePaths.Length}");
+                    _chromeDriver.Navigate().GoToUrl(BaseUrl);
+                    
+                    string[] setOfThree = new string[3];
+                    var remainingFiles = filePaths.Length - i;
+                    if (remainingFiles >= 3)
+                    {
+                        Array.Copy(filePaths, i, setOfThree, 0, 3);
+                    }
+                    else
+                    {
+                        Array.Copy(filePaths, i, setOfThree, 0, remainingFiles);
+                    }
+                    
+                    UploadFiles(setOfThree);
+                    DownloadProcessedFiles();
+                    ExtractProcessedFiles();
+                }
+                
+                
                 Console.WriteLine("Thanks for using my app! - Adam <3");
             }
             catch (Exception e)
@@ -140,7 +157,6 @@ namespace AutoColoriserNet48
         private static void UploadFiles(string[] filepaths)
         {
             Console.WriteLine("Uploading Files");
-            _chromeDriver.Navigate().GoToUrl(BaseUrl);
             
             // construct file path string for file selection dialog
             var uploadFilesPaths = String.Join(" ", filepaths.Select(fp => $"\"{fp}\""));
