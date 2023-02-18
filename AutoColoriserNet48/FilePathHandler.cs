@@ -5,40 +5,40 @@ namespace AutoColoriserNet48
 {
     public class FilePathHandler
     {
-        private string RootFolder;
+        private string SourceFolderName;
+        private string DestinationFolderName;
         
-        public FilePathHandler(string rootFolder)
+        public FilePathHandler(string sourceFolderName, string destinationFolderName)
         {
-            RootFolder = rootFolder;
+            SourceFolderName = sourceFolderName;
+            DestinationFolderName = destinationFolderName;
         }
         
         #region Public Methods
-        public string ReadPath()
+        public (string rootPath, string fullPath) ReadPath()
         {
             Console.WriteLine("Welcome to Adam's Auto Coloriser!");
-            Console.Write($"Enter customer name: ");
-            var customerFolder = Console.ReadLine();
-            if (String.IsNullOrEmpty(customerFolder))
+            Console.Write($"Enter customer directory: ");
+            var rootPath = Console.ReadLine();
+            if (String.IsNullOrEmpty(rootPath))
             {
                 throw new ApplicationException("Customer can't be empty!");
             }
 
-            Console.WriteLine();
-
-            var path = $"{RootFolder}\\{customerFolder}";
+            var finalPath = $"{rootPath}\\{SourceFolderName}";
+            Console.WriteLine($"Chosen source directory: {finalPath}");
             
-            GetDirectory(path);
+            Console.WriteLine();
+            
+            GetDirectory(finalPath);
 
-            return path;
+            return (rootPath, finalPath);
         }
         
         public string GetOrCreateOutputPath(string inputPath)
         {
-            var outputPath = $"{inputPath}\\output";
-            if (!Directory.Exists(outputPath))
-            {
-                Directory.CreateDirectory(outputPath);
-            }
+            var outputPath = $"{inputPath}\\{DestinationFolderName}";
+            Directory.CreateDirectory(outputPath);
 
             return outputPath;
         }

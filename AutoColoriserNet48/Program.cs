@@ -18,7 +18,7 @@ namespace AutoColoriserNet48
 {
     internal class Program
     {
-        private static readonly string RootFolder = ConfigurationManager.AppSettings["RootFolder"];
+        private static readonly string LogFolderPath = ConfigurationManager.AppSettings["LogFolderPath"];
         
         private static readonly AutoColoriser _autoColoriser = new AutoColoriser();
         
@@ -54,14 +54,10 @@ namespace AutoColoriserNet48
 
         private static void WriteLogFile(Exception exception)
         {
-            var logFolderPath = $"{RootFolder}\\Logs";
-            if (!Directory.Exists(logFolderPath))
-            {
-                Directory.CreateDirectory(logFolderPath);
-            }
+            Directory.CreateDirectory(LogFolderPath);
 
             var currentTime = DateTime.Now.ToString("dd-MM-yy_hhmmss");
-            File.WriteAllText($"{logFolderPath}\\{currentTime}.txt", JsonConvert.SerializeObject(exception, Formatting.Indented));
+            File.WriteAllText($"{LogFolderPath}\\{currentTime}.txt", JsonConvert.SerializeObject(exception, Formatting.Indented));
         }
     }
 }

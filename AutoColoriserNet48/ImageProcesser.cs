@@ -14,15 +14,15 @@ namespace AutoColoriserNet48
     public class ImageProcesser
     {
         private static ChromeDriver _chromeDriver;
-        private static string _downloadsFolder;
         private static string _outputPath;
+        
+        private static string DownloadsFolderPath = ConfigurationManager.AppSettings["DownloadsFolderPath"];
         
         private static int DPI = Int16.Parse(ConfigurationManager.AppSettings["DPI"]);
 
-        public ImageProcesser(ChromeDriver chromeDriver, string downloadsFolder, string outputPath)
+        public ImageProcesser(ChromeDriver chromeDriver, string outputPath)
         {
             _chromeDriver = chromeDriver;
-            _downloadsFolder = downloadsFolder;
             _outputPath = outputPath;
         }
 
@@ -92,7 +92,7 @@ namespace AutoColoriserNet48
             
             element.Click();
 
-            var downloadFilePath = _downloadsFolder + $"\\{downloadFileName}.zip";
+            var downloadFilePath = DownloadsFolderPath + $"\\{downloadFileName}.zip";
             
             WriteLog("Downloading zip file...");
             // wait for download to finish

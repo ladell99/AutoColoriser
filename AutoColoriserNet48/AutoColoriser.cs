@@ -20,21 +20,21 @@ namespace AutoColoriserNet48
         
         #region Paths
         
-        private static readonly string RootFolder = ConfigurationManager.AppSettings["RootFolder"];
-        private static readonly string DownloadsFolder = ConfigurationManager.AppSettings["DownloadsFolder"];
+        private static readonly string SourceFolderName = ConfigurationManager.AppSettings["SourceFolderName"];
+        private static readonly string DestinationFolderName = ConfigurationManager.AppSettings["DestinationFolderName"];
         #endregion
 
         public void Run()
         {
-            var filePathHandler = new FilePathHandler(RootFolder);
-            var inputPath = filePathHandler.ReadPath();
-            var outputPath = filePathHandler.GetOrCreateOutputPath(inputPath);
+            var filePathHandler = new FilePathHandler(SourceFolderName, DestinationFolderName);
+            var (rootPath, inputPath) = filePathHandler.ReadPath();
+            var outputPath = filePathHandler.GetOrCreateOutputPath(rootPath);
             
             InitializeChromeDriver();
 
             try
             {
-                var imageProcesser = new ImageProcesser(_chromeDriver, DownloadsFolder, outputPath);
+                var imageProcesser = new ImageProcesser(_chromeDriver, outputPath);
                 var filePaths = Directory.GetFiles(inputPath);
                 for (var i = 0; i < filePaths.Length; i += 3)
                 {
