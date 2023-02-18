@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Forms;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 
@@ -31,30 +32,49 @@ namespace AutoColoriserNet48
             
             InitializeChromeDriver();
 
-            var imageProcesser = new ImageProcesser(_chromeDriver, DownloadsFolder, outputPath);
-            var filePaths = Directory.GetFiles(inputPath);
-            for (var i = 0; i < filePaths.Length; i+= 3)
+            try
             {
-                Console.WriteLine($"Processing {3 + i} / {filePaths.Length}");
-                _chromeDriver.Navigate().GoToUrl(BaseUrl);
-                    
-                string[] setOfThree = new string[3];
-                var remainingFiles = filePaths.Length - i;
-                if (remainingFiles >= 3)
+                var imageProcesser = new ImageProcesser(_chromeDriver, DownloadsFolder, outputPath);
+                var filePaths = Directory.GetFiles(inputPath);
+                for (var i = 0; i < filePaths.Length; i += 3)
                 {
-                    Array.Copy(filePaths, i, setOfThree, 0, 3);
-                }
-                else
-                {
-                    Array.Copy(filePaths, i, setOfThree, 0, remainingFiles);
-                }
+                    _chromeDriver.Navigate().GoToUrl(BaseUrl);
 
-                imageProcesser.ProcessImages(setOfThree);
-            } 
+                    string[] processSet;
+                    var remainingFiles = filePaths.Length - i;
+                    if (remainingFiles >= 3)
+                    {
+                        processSet = new string[3];
+                        Array.Copy(filePaths, i, processSet, 0, 3);
+                    }
+                    else
+                    {
+                        processSet = new string[remainingFiles];
+                        Array.Copy(filePaths, i, processSet, 0, remainingFiles);
+                    }
+
+                    Console.WriteLine($"Processing {processSet.Length + i} / {filePaths.Length}");
+
+                    imageProcesser.ProcessImages(processSet);
+                }
+            }
+            catch (Exception)
+            {
+                _chromeDriver.Quit();
+                throw;
+            }
+            finally
+            {
+                _chromeDriver.Quit();
+            }
+                                                                   
+            Console.WriteLine("\nFinished processing all files!");
         }
 
         private static void InitializeChromeDriver()
         {
+            var (screenWidth, screenHeight) = GetScreenSize();
+            
             ChromeDriverService service = ChromeDriverService.CreateDefaultService();
             service.EnableVerboseLogging = false;
             service.SuppressInitialDiagnosticInformation = true;
@@ -63,7 +83,8 @@ namespace AutoColoriserNet48
             var options = new ChromeOptions();
             options.AddArgument("--window-size=1920,1080");
             options.AddArgument("--no-sandbox");
-            options.AddArgument("--headless");
+            options.AddArgument("--start-minimized");
+            // options.AddArgument("--headless");
             options.AddArgument("--disable-gpu");
             options.AddArgument("--disable-crash-reporter");
             options.AddArgument("--disable-extensions");
@@ -74,10 +95,18 @@ namespace AutoColoriserNet48
             options.AddArgument("--output=/dev/null");
             
             _chromeDriver = new ChromeDriver(service, options);
+            _chromeDriver.Manage().Window.Position = new System.Drawing.Point(screenWidth, screenHeight);
             Trace.Listeners.Clear();
             Trace.Listeners.Add(new SupressSeleniumLogs());
-            _chromeDriver.Manage().Timeouts().ImplicitWait = TimeSpan.MaxValue;
-            _chromeDriver.Manage().Timeouts().PageLoad = TimeSpan.MaxValue;
+            _chromeDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMinutes(10);
+            _chromeDriver.Manage().Timeouts().PageLoad = TimeSpan.FromMinutes(10);
+        }
+
+        private static (int screenWidth, int screenHeight) GetScreenSize()
+        {
+            Screen primaryScreen = Screen.PrimaryScreen;
+            var screenSize = primaryScreen.Bounds.Size;
+            return (screenSize.Width, screenSize.Height);
         }
     }
 }

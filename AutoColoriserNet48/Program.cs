@@ -40,7 +40,6 @@ namespace AutoColoriserNet48
                 Console.WriteLine("Exception occured! Please contact Adam to resolve this");
                 Console.WriteLine("******************************************************");
                 WriteLogFile(e);
-                Environment.Exit(500);
             }
             finally
             {
@@ -49,7 +48,7 @@ namespace AutoColoriserNet48
                     Console.WriteLine();
                 }
                 Console.WriteLine("Thanks for using my app! - Adam <3");
-                Thread.Sleep(TimeSpan.FromSeconds(5));
+                Thread.Sleep(Int32.MaxValue);
             }
         }
 

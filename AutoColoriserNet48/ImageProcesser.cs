@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -15,6 +16,8 @@ namespace AutoColoriserNet48
         private static ChromeDriver _chromeDriver;
         private static string _downloadsFolder;
         private static string _outputPath;
+        
+        private static int DPI = Int16.Parse(ConfigurationManager.AppSettings["DPI"]);
 
         public ImageProcesser(ChromeDriver chromeDriver, string downloadsFolder, string outputPath)
         {
@@ -22,7 +25,7 @@ namespace AutoColoriserNet48
             _downloadsFolder = downloadsFolder;
             _outputPath = outputPath;
         }
-        
+
         public void ProcessImages(string[] filePaths)
         {
             UploadFiles(filePaths);
@@ -32,17 +35,27 @@ namespace AutoColoriserNet48
         
         private void UploadFiles(string[] filePaths)
         {
-            Console.WriteLine("Uploading Files");
+            WriteLog("Uploading Files");
             
             // construct file path string for file selection dialog
             var uploadFilesPaths = String.Join(" ", filePaths.Select(fp => $"\"{fp}\""));
             
             // wait for Upload button to be loaded on page
             var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(100));
-            wait.Until(driver => driver.FindElement(By.ClassName("vue-uploadbox-file-button")));
+            var fileInput = wait.Until(driver =>
+            {
+                var element = driver.FindElement(By.ClassName("vue-uploadbox-file-button"));
+                while (!element.Enabled) {};
+                
+                return element;
+            });
             
-            var fileInput = _chromeDriver.FindElement(By.ClassName("vue-uploadbox-file-button"));
             var submitBtn = _chromeDriver.FindElement(By.ClassName("submit-btn"));
+            
+            // Change DPI before submitting
+
+            var dpiInput = _chromeDriver.FindElement(By.Id("inputColorRenderFactor"));
+            dpiInput.SendKeys(DPI.ToString());
             
             fileInput.Click();
 
@@ -51,22 +64,27 @@ namespace AutoColoriserNet48
             AutoItX.ControlSetText("Open", "", "Edit1", uploadFilesPaths);
             AutoItX.ControlClick("Open", "", "Button1");
             // wait for file input dialog to close
-            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Thread.Sleep(TimeSpan.FromSeconds(1));
 
             submitBtn.Click();
-            Console.WriteLine("Processing");
+            WriteLog($"Processing files using {DPI} dpi...");
         }
         
         private static string DownloadProcessedFiles()
         {
-            WebDriverWait wait = new WebDriverWait(_chromeDriver, TimeSpan.FromMinutes(10));
-            var element = wait.Until(driver =>
+            
+            // TODO: Find better way to do this
+            // Thread.Sleep(TimeSpan.FromMinutes(1));
+            IWebElement element;
+            try
             {
-                var el = driver.FindElement(By.Id("downloadZipFile"));
-                while (!el.Displayed) { }
-
-                return el;
-            });
+                element = GetDownloadZipFileElement();
+            }
+            catch (WebDriverTimeoutException)
+            {
+                WriteLog("Timeout occurred waiting for processing to finish. Trying again..");
+                element = GetDownloadZipFileElement();
+            }
 
             var nameDivs = _chromeDriver.FindElements(By.CssSelector("div.file-name>a"));
             var fileNameContent = nameDivs[0].Text;
@@ -76,23 +94,43 @@ namespace AutoColoriserNet48
 
             var downloadFilePath = _downloadsFolder + $"\\{downloadFileName}.zip";
             
-            Console.WriteLine("Downloading zip file...");
+            WriteLog("Downloading zip file...");
             // wait for download to finish
             while (!File.Exists(downloadFilePath))
             {
                 Thread.Sleep(TimeSpan.FromSeconds(1));
             }
             
-            Console.WriteLine("Zip file Downloaded");
+            WriteLog("Zip file Downloaded!");
 
             return downloadFilePath;
         }
-        
+
+        private static IWebElement GetDownloadZipFileElement()
+        {
+            WebDriverWait wait = new WebDriverWait(_chromeDriver, TimeSpan.FromMinutes(100));
+            var element = wait.Until(driver =>
+            {
+                var el = driver.FindElement(By.Id("downloadZipFile"));
+                while (!el.Displayed)
+                {
+                }
+
+                return el;
+            });
+            return element;
+        }
+
         private static void ExtractProcessedFiles(string downloadFilePath)
         {
             ZipFile.ExtractToDirectory(downloadFilePath, _outputPath);
-            Console.WriteLine("Extracted Successfully");
+            WriteLog("Extracted Successfully");
             File.Delete(downloadFilePath);
+        }
+
+        private static void WriteLog(string log)
+        {
+            Console.WriteLine("\t" + log);
         }
     }
 }
