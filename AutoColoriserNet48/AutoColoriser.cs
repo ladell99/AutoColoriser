@@ -90,9 +90,9 @@ namespace AutoColoriserNet48
             int numOfLines = 7;
             for (int i = 0; i < numOfLines; i++)
             {
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
+                Console.SetCursorPosition(0, Console.CursorTop);
                 Console.Write(new string(' ', Console.WindowWidth));
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
+                Console.SetCursorPosition(0, Console.CursorTop);
             }
             Console.SetCursorPosition(0, Console.CursorTop);
         }
