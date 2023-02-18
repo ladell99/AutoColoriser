@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -67,7 +68,6 @@ namespace AutoColoriserNet48
             Thread.Sleep(TimeSpan.FromSeconds(1));
 
             submitBtn.Click();
-            WriteLog($"Processing files using {DPI} dpi...");
         }
         
         private static string DownloadProcessedFiles()
@@ -94,11 +94,14 @@ namespace AutoColoriserNet48
 
             var downloadFilePath = DownloadsFolderPath + $"\\{downloadFileName}.zip";
             
-            WriteLog("Downloading zip file...");
+            WriteLog("Downloading zip file");
             // wait for download to finish
+            var sw = new Stopwatch();
+            sw.Start();
             while (!File.Exists(downloadFilePath))
             {
                 Thread.Sleep(TimeSpan.FromSeconds(1));
+                WriteLog($"Downloading zip file ({Math.Truncate(sw.Elapsed.TotalSeconds)}s)", true);
             }
             
             WriteLog("Zip file Downloaded!");
@@ -108,17 +111,30 @@ namespace AutoColoriserNet48
 
         private static IWebElement GetDownloadZipFileElement()
         {
-            WebDriverWait wait = new WebDriverWait(_chromeDriver, TimeSpan.FromMinutes(100));
-            var element = wait.Until(driver =>
+            WriteLog($"Processing files using {DPI} dpi");
+            IWebElement downloadElement = null;
+            var sw = new Stopwatch();
+            sw.Start();
+            for (var i = 0; i <= 5; i++)
             {
-                var el = driver.FindElement(By.Id("downloadZipFile"));
-                while (!el.Displayed)
+                var el = _chromeDriver.FindElement(By.Id("downloadZipFile"));
+
+                if (el != null && el.Displayed)
                 {
+                    WriteLog("Processing Finished!");
+                    downloadElement = el;
+                    break;
                 }
 
-                return el;
-            });
-            return element;
+                // use this instead of while loop
+                if (i == 5)
+                    i = 0;
+
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+                WriteLog($"Processing files using {DPI} dpi ({Math.Truncate(sw.Elapsed.TotalSeconds)}s)", true);
+            }
+
+            return downloadElement;
         }
 
         private static void ExtractProcessedFiles(string downloadFilePath)
@@ -128,8 +144,13 @@ namespace AutoColoriserNet48
             File.Delete(downloadFilePath);
         }
 
-        private static void WriteLog(string log)
+        private static void WriteLog(string log, bool overwriteLast = false)
         {
+            if (overwriteLast)
+            {
+                Console.SetCursorPosition(0, Console.CursorTop - 1);
+            }
+            
             Console.WriteLine("\t" + log);
         }
     }
