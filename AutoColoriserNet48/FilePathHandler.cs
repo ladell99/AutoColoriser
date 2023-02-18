@@ -1,23 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace AutoColoriserNet48
 {
     public class FilePathHandler
     {
-        private string SourceFolderName;
-        private string DestinationFolderName;
+        private readonly string _sourceFolderName;
+        private readonly string _destinationFolderName;
+
+        private static List<string> _processingLogs;
         
-        public FilePathHandler(string sourceFolderName, string destinationFolderName)
+        public FilePathHandler(string sourceFolderName, string destinationFolderName, List<string> processingLogs)
         {
-            SourceFolderName = sourceFolderName;
-            DestinationFolderName = destinationFolderName;
+            _sourceFolderName = sourceFolderName;
+            _destinationFolderName = destinationFolderName;
+            _processingLogs = processingLogs;
         }
         
         #region Public Methods
         public (string rootPath, string fullPath) ReadPath()
         {
-            Console.WriteLine("Welcome to Adam's Auto Coloriser!");
+            WriteLog("Welcome to Adam's Auto Coloriser!");
             Console.Write($"Enter customer directory: ");
             var rootPath = Console.ReadLine();
             if (String.IsNullOrEmpty(rootPath))
@@ -25,9 +29,9 @@ namespace AutoColoriserNet48
                 throw new ApplicationException("Customer can't be empty!");
             }
 
-            var finalPath = $"{rootPath}\\{SourceFolderName}";
-            Console.WriteLine($"Chosen source directory: {finalPath}");
-            
+            var finalPath = $"{rootPath}\\{_sourceFolderName}";
+            WriteLog($"Chosen source directory: {finalPath}");
+
             Console.WriteLine();
             
             GetDirectory(finalPath);
@@ -37,7 +41,7 @@ namespace AutoColoriserNet48
         
         public string GetOrCreateOutputPath(string inputPath)
         {
-            var outputPath = $"{inputPath}\\{DestinationFolderName}";
+            var outputPath = $"{inputPath}\\{_destinationFolderName}";
             Directory.CreateDirectory(outputPath);
 
             return outputPath;
@@ -53,12 +57,19 @@ namespace AutoColoriserNet48
 
             var fileCount = Directory.GetFiles(path).Length;
             string consoleFileSuffix = fileCount == 1 ? "file" : "files";
-            Console.WriteLine($"Found {fileCount} {consoleFileSuffix}");
+            WriteLog($"Found {fileCount} {consoleFileSuffix}");
 
             if (fileCount == 0)
             {
                 throw new ApplicationException($"Directory does not contain any images. Please add images into {path} and run this program again");
             }
+        }
+
+        private static void WriteLog(string message)
+        {
+            _processingLogs.Add(message);
+            
+            Console.WriteLine(message);
         }
     }
 }

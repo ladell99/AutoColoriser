@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
-using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 
 namespace AutoColoriserNet48
@@ -23,10 +23,19 @@ namespace AutoColoriserNet48
         private static readonly string SourceFolderName = ConfigurationManager.AppSettings["SourceFolderName"];
         private static readonly string DestinationFolderName = ConfigurationManager.AppSettings["DestinationFolderName"];
         #endregion
+        
+        #region Logging
+        private static List<string> _processingLogs;
+        #endregion
+
+        public AutoColoriser(List<string> processingLogs)
+        {
+            _processingLogs = processingLogs;
+        }
 
         public void Run()
         {
-            var filePathHandler = new FilePathHandler(SourceFolderName, DestinationFolderName);
+            var filePathHandler = new FilePathHandler(SourceFolderName, DestinationFolderName, _processingLogs);
             var (rootPath, inputPath) = filePathHandler.ReadPath();
             var outputPath = filePathHandler.GetOrCreateOutputPath(rootPath);
             
@@ -34,10 +43,15 @@ namespace AutoColoriserNet48
 
             try
             {
-                var imageProcesser = new ImageProcesser(_chromeDriver, outputPath);
+                var imageProcesser = new ImageProcesser(_chromeDriver, outputPath, _processingLogs);
                 var filePaths = Directory.GetFiles(inputPath);
                 for (var i = 0; i < filePaths.Length; i += 3)
                 {
+                    if (i >= 3)
+                    {
+                        ClearConsoleLines();
+                    }
+                    
                     _chromeDriver.Navigate().GoToUrl(BaseUrl);
 
                     string[] processSet;
@@ -53,7 +67,7 @@ namespace AutoColoriserNet48
                         Array.Copy(filePaths, i, processSet, 0, remainingFiles);
                     }
 
-                    Console.WriteLine($"Processing {processSet.Length + i} / {filePaths.Length}");
+                    WriteLog($"Processing {processSet.Length + i} / {filePaths.Length}");
 
                     imageProcesser.ProcessImages(processSet);
                 }
@@ -68,7 +82,19 @@ namespace AutoColoriserNet48
                 _chromeDriver.Quit();
             }
                                                                    
-            Console.WriteLine("\nFinished processing all files!");
+            WriteLog("\nFinished processing all files!");
+        }
+
+        private void ClearConsoleLines()
+        {
+            int numOfLines = 7;
+            for (int i = 0; i < numOfLines; i++)
+            {
+                Console.SetCursorPosition(0, Console.CursorTop - 1);
+                Console.Write(new string(' ', Console.WindowWidth));
+                Console.SetCursorPosition(0, Console.CursorTop - 1);
+            }
+            Console.SetCursorPosition(0, Console.CursorTop);
         }
 
         private static void InitializeChromeDriver()
@@ -107,6 +133,13 @@ namespace AutoColoriserNet48
             Screen primaryScreen = Screen.PrimaryScreen;
             var screenSize = primaryScreen.Bounds.Size;
             return (screenSize.Width, screenSize.Height);
+        }
+
+        private static void WriteLog(string log)
+        {
+            _processingLogs.Add(log);
+            
+            Console.WriteLine(log);
         }
     }
 }

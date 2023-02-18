@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
@@ -17,14 +18,18 @@ namespace AutoColoriserNet48
         private static ChromeDriver _chromeDriver;
         private static string _outputPath;
         
-        private static string DownloadsFolderPath = ConfigurationManager.AppSettings["DownloadsFolderPath"];
+        private static readonly string DownloadsFolderPath = ConfigurationManager.AppSettings["DownloadsFolderPath"];
         
-        private static int DPI = Int16.Parse(ConfigurationManager.AppSettings["DPI"]);
+        private static readonly int DPI = Int16.Parse(ConfigurationManager.AppSettings["DPI"]);
 
-        public ImageProcesser(ChromeDriver chromeDriver, string outputPath)
+        private static List<string> _processingLogs;
+
+        public ImageProcesser(ChromeDriver chromeDriver, string outputPath, List<string> processingLogs)
         {
             _chromeDriver = chromeDriver;
             _outputPath = outputPath;
+
+            _processingLogs = processingLogs;
         }
 
         public void ProcessImages(string[] filePaths)
@@ -150,8 +155,18 @@ namespace AutoColoriserNet48
             {
                 Console.SetCursorPosition(0, Console.CursorTop - 1);
             }
+
+            var message = "\t" + log;
+            if (overwriteLast && _processingLogs.Count > 0)
+            {
+                _processingLogs[_processingLogs.Count - 1] = message;
+            }
+            else
+            {
+                _processingLogs.Add(message);
+            }
             
-            Console.WriteLine("\t" + log);
+            Console.WriteLine(message);
         }
     }
 }
