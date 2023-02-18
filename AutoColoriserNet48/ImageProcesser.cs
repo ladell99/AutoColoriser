@@ -35,6 +35,8 @@ namespace AutoColoriserNet48
         
         private void UploadFiles(string[] filePaths)
         {
+            Console.WriteLine($"Downloads folder path: {DownloadsFolderPath}");
+        
             WriteLog("Uploading Files");
             
             // construct file path string for file selection dialog
