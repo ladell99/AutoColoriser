@@ -47,11 +47,6 @@ namespace AutoColoriserNet48
                 var filePaths = Directory.GetFiles(inputPath);
                 for (var i = 0; i < filePaths.Length; i += 3)
                 {
-                    if (i >= 3)
-                    {
-                        ClearConsoleLines();
-                    }
-                    
                     _chromeDriver.Navigate().GoToUrl(BaseUrl);
 
                     string[] processSet;
@@ -83,18 +78,6 @@ namespace AutoColoriserNet48
             }
                                                                    
             WriteLog("\nFinished processing all files!");
-        }
-
-        private void ClearConsoleLines()
-        {
-            int numOfLines = 7;
-            for (int i = 0; i < numOfLines; i++)
-            {
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write(new string(' ', Console.WindowWidth));
-                Console.SetCursorPosition(0, Console.CursorTop);
-            }
-            Console.SetCursorPosition(0, Console.CursorTop);
         }
 
         private static void InitializeChromeDriver()
