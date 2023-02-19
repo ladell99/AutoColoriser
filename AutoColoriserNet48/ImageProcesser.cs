@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
@@ -43,51 +44,71 @@ namespace AutoColoriserNet48
         private void UploadFiles(string[] filePaths)
         {
             WriteLog("Uploading Files");
-            
-            // construct file path string for file selection dialog
-            var uploadFilesPaths = String.Join(" ", filePaths.Select(fp => $"\"{fp}\""));
-            
-            // wait for Upload button to be loaded on page
-            var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(100));
-            var fileInput = wait.Until(driver =>
+            var sw = new Stopwatch();
+            sw.Start();
+            using (new PeriodicProgressTracking(() =>
+                   {
+                       WriteLog($"Uploading Files ({sw.Elapsed.ToString("mm':'ss")})", true);
+                       return Task.CompletedTask;
+                   }))
             {
-                var element = driver.FindElement(By.ClassName("vue-uploadbox-file-button"));
-                while (!element.Enabled) {};
-                
-                return element;
-            });
+                // construct file path string for file selection dialog
+                var uploadFilesPaths = String.Join(" ", filePaths.Select(fp => $"\"{fp}\""));
             
-            var submitBtn = _chromeDriver.FindElement(By.ClassName("submit-btn"));
-            
-            // Change DPI before submitting
-
-            var dpiInput = _chromeDriver.FindElement(By.Id("inputColorRenderFactor"));
-            dpiInput.SendKeys(DPI.ToString());
-            
-            fileInput.Click();
-
-            bool fileInputCompleted = false;
-            while (!fileInputCompleted)
-            {
-                var winOpen = AutoItX.WinWait("Open", "", 10);
-                AutoItX.ControlSetText("Open", "", "Edit1", uploadFilesPaths);
-                AutoItX.ControlClick("Open", "", "Button1");
-                // wait for file input dialog to close
-                Thread.Sleep(200);
-                if (AutoItX.WinWait("Open", "", 1) == 0)
+                // wait for Upload button to be loaded on page
+                var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(100));
+                var fileInput = wait.Until(driver =>
                 {
-                    fileInputCompleted = true;
-                }
-            }
+                    var element = driver.FindElement(By.ClassName("vue-uploadbox-file-button"));
+                    while (!element.Enabled) {};
+                
+                    return element;
+                });
+            
+                var submitBtn = _chromeDriver.FindElement(By.ClassName("submit-btn"));
+            
+                // Change DPI before submitting
 
-            submitBtn.Click();
+                var dpiInput = _chromeDriver.FindElement(By.Id("inputColorRenderFactor"));
+                dpiInput.SendKeys(DPI.ToString());
+            
+                fileInput.Click();
+
+                bool fileInputCompleted = false;
+                while (!fileInputCompleted)
+                {
+                    AutoItX.WinWait("Open", "", 10);
+                    AutoItX.ControlSetText("Open", "", "Edit1", uploadFilesPaths);
+                    AutoItX.ControlClick("Open", "", "Button1");
+                    // wait for file input dialog to close
+                    Thread.Sleep(200);
+                    if (AutoItX.WinWait("Open", "", 1) == 0)
+                    {
+                        fileInputCompleted = true;
+                    }
+                }
+
+                bool uploadFinished = false;
+                while (!uploadFinished)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                    ReadOnlyCollection<IWebElement> uploadSpinners = null;
+                    try
+                    {
+                        uploadSpinners = _chromeDriver.FindElements(By.ClassName("badge-info"));
+                    }
+                    catch (WebDriverTimeoutException) { }
+                    catch (NoSuchElementException) {}
+                    if (uploadSpinners == null || uploadSpinners.Count == 0)
+                        uploadFinished = true;
+                }
+
+                submitBtn.Click();
+            }
         }
         
         private static string DownloadProcessedFiles()
         {
-            
-            // TODO: Find better way to do this
-            // Thread.Sleep(TimeSpan.FromMinutes(1));
             IWebElement element;
             try
             {
@@ -98,8 +119,6 @@ namespace AutoColoriserNet48
                 WriteLog("Timeout occurred waiting for processing to finish. Trying again..");
                 element = GetDownloadZipFileElement();
             }
-
-            WriteLog("Finished processing!");
 
             var nameDivs = _chromeDriver.FindElements(By.CssSelector("div.file-name>a"));
             var fileNameContent = nameDivs[0].Text;
@@ -115,7 +134,7 @@ namespace AutoColoriserNet48
             sw.Start();
             using (new PeriodicProgressTracking(() =>
                    {
-                       WriteLog($"Downloading zip file ({Math.Truncate(sw.Elapsed.TotalSeconds)}s)", true);
+                       WriteLog($"Downloading zip file ({sw.Elapsed.ToString("mm':'ss")})", true);
                        return Task.CompletedTask;
                    }))
             {
@@ -137,7 +156,7 @@ namespace AutoColoriserNet48
             sw.Start();
             using (new PeriodicProgressTracking(() =>
                    {
-                       WriteLog($"Processing files using {DPI} dpi ({Math.Truncate(sw.Elapsed.TotalSeconds)}s)", true);
+                       WriteLog($"Processing files using {DPI} dpi ({sw.Elapsed.ToString("mm':'ss")})", true);
                        return Task.CompletedTask;
                    }))
             {
@@ -147,7 +166,9 @@ namespace AutoColoriserNet48
                     try
                     {
                         el = _chromeDriver.FindElement(By.Id("downloadZipFile"));
-                    } catch(WebDriverTimeoutException) {}
+                    } 
+                    catch(WebDriverTimeoutException) {}
+                    catch(NoSuchElementException) {}
 
                     if (el != null && el.Displayed)
                     {

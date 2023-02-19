@@ -113,7 +113,7 @@ namespace AutoColoriserNet48
             _chromeDriver.Manage().Window.Position = new System.Drawing.Point(screenWidth, screenHeight);
             Trace.Listeners.Clear();
             Trace.Listeners.Add(new SupressSeleniumLogs());
-            _chromeDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMinutes(10);
+            _chromeDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(1);
             _chromeDriver.Manage().Timeouts().PageLoad = TimeSpan.FromMinutes(10);
         }
 

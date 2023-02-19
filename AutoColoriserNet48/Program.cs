@@ -62,7 +62,7 @@ namespace AutoColoriserNet48
             sb.AppendLine("Exception:");
             sb.Append(JsonConvert.SerializeObject(exception, Formatting.Indented));
 
-            var currentTime = DateTime.Now.ToString("dd-MM-yy_hhmmss");
+            var currentTime = DateTime.Now.ToString("dd-MM-yy_HHmmss");
             File.WriteAllText($"{LogFolderPath}\\{currentTime}.txt", sb.ToString());
         }
     }

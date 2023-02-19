@@ -51,7 +51,7 @@ namespace AutoColoriserNet48
         public IEnumerable<string> GetInputFiles(string outputPath, string inputPath)
         {
             var inputFiles = Directory.GetFiles(inputPath);
-            var existingFiles = Directory.GetFiles(outputPath).Select(ef => ef.Substring(ef.LastIndexOf("\\", StringComparison.Ordinal))).ToArray();
+            var existingFiles = Directory.GetFiles(outputPath).Select(GetFileName).ToArray();
 
             var conflictingFiles = new List<string>();
             var updatedInputFiles = new List<string>();
@@ -61,7 +61,7 @@ namespace AutoColoriserNet48
             
             foreach (var i in inputFiles)
             {
-                var iFileName = i.Substring(i.LastIndexOf("\\", StringComparison.Ordinal));
+                var iFileName = GetFileName(i);
                 
                 if (existingFiles.Contains(iFileName))
                 {
@@ -81,6 +81,13 @@ namespace AutoColoriserNet48
             return updatedInputFiles;
         }
         #endregion
+
+        private string GetFileName(string path)
+        {
+            var fileNameStart = path.LastIndexOf("\\", StringComparison.Ordinal);
+            var fileNameLength = path.LastIndexOf('.') - fileNameStart;
+            return path.Substring(fileNameStart, fileNameLength);
+        }
         
         private void GetDirectory(string path)
         {
@@ -95,7 +102,7 @@ namespace AutoColoriserNet48
 
             if (fileCount == 0)
             {
-                throw new ApplicationException($"Directory does not contain any images. Please add images into {path} and run this program again");
+                WriteLog("No files found in source directory. Stopping");
             }
         }
 
