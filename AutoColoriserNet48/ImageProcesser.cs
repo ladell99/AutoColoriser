@@ -151,7 +151,6 @@ namespace AutoColoriserNet48
         private static IWebElement GetDownloadZipFileElement()
         {
             WriteLog($"Processing files using {DPI} dpi");
-            IWebElement downloadElement = null;
             var sw = new Stopwatch();
             sw.Start();
             using (new PeriodicProgressTracking(() =>
