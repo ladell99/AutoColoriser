@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace AutoColoriserNet48
 {
@@ -45,6 +46,39 @@ namespace AutoColoriserNet48
             Directory.CreateDirectory(outputPath);
 
             return outputPath;
+        }
+
+        public IEnumerable<string> GetInputFiles(string outputPath, string inputPath)
+        {
+            var inputFiles = Directory.GetFiles(inputPath);
+            var existingFiles = Directory.GetFiles(outputPath).Select(ef => ef.Substring(ef.LastIndexOf("\\", StringComparison.Ordinal))).ToArray();
+
+            var conflictingFiles = new List<string>();
+            var updatedInputFiles = new List<string>();
+
+            if (existingFiles.Length == 0)
+                return inputFiles;
+            
+            foreach (var i in inputFiles)
+            {
+                var iFileName = i.Substring(i.LastIndexOf("\\", StringComparison.Ordinal));
+                
+                if (existingFiles.Contains(iFileName))
+                {
+                    conflictingFiles.Add(i);
+                }
+                else
+                {
+                    updatedInputFiles.Add(i);
+                }
+            }
+
+            if (conflictingFiles.Count > 0)
+            {
+                WriteLog($"Skipping {conflictingFiles.Count} files, as they have already been processed before");
+            }
+
+            return updatedInputFiles;
         }
         #endregion
         

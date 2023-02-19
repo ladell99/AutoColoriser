@@ -56,6 +56,7 @@
         <Compile Include="FilePathHandler.cs" />
         <Compile Include="ImageProcesser.cs" />
         <Compile Include="LoggerExtensionClasses.cs" />
+        <Compile Include="PeriodicProgressTracking.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>

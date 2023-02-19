@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
-using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using OpenQA.Selenium.Chrome;
 
@@ -43,26 +43,32 @@ namespace AutoColoriserNet48
 
             try
             {
+                var inputFiles = filePathHandler.GetInputFiles(outputPath, inputPath).ToArray();
                 var imageProcesser = new ImageProcesser(_chromeDriver, outputPath, _processingLogs);
-                var filePaths = Directory.GetFiles(inputPath);
-                for (var i = 0; i < filePaths.Length; i += 3)
+                for (var i = 0; i < inputFiles.Length; i += 3)
                 {
                     _chromeDriver.Navigate().GoToUrl(BaseUrl);
 
                     string[] processSet;
-                    var remainingFiles = filePaths.Length - i;
+                    var remainingFiles = inputFiles.Count() - i;
+
+                    if (remainingFiles == 0)
+                    {
+                        break;
+                    }     
+                    
                     if (remainingFiles >= 3)
                     {
                         processSet = new string[3];
-                        Array.Copy(filePaths, i, processSet, 0, 3);
+                        Array.Copy(inputFiles, i, processSet, 0, 3);
                     }
                     else
                     {
                         processSet = new string[remainingFiles];
-                        Array.Copy(filePaths, i, processSet, 0, remainingFiles);
+                        Array.Copy(inputFiles, i, processSet, 0, remainingFiles);
                     }
 
-                    WriteLog($"Processing {processSet.Length + i} / {filePaths.Length}");
+                    WriteLog($"Processing {processSet.Length + i} / {inputFiles.Length}");
 
                     imageProcesser.ProcessImages(processSet);
                 }

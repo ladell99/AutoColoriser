@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using AutoIt;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -65,12 +66,19 @@ namespace AutoColoriserNet48
             
             fileInput.Click();
 
-            // wait for file input dialog to open
-            AutoItX.WinWait("Open", "", 10);
-            AutoItX.ControlSetText("Open", "", "Edit1", uploadFilesPaths);
-            AutoItX.ControlClick("Open", "", "Button1");
-            // wait for file input dialog to close
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            bool fileInputCompleted = false;
+            while (!fileInputCompleted)
+            {
+                var winOpen = AutoItX.WinWait("Open", "", 10);
+                AutoItX.ControlSetText("Open", "", "Edit1", uploadFilesPaths);
+                AutoItX.ControlClick("Open", "", "Button1");
+                // wait for file input dialog to close
+                Thread.Sleep(200);
+                if (AutoItX.WinWait("Open", "", 1) == 0)
+                {
+                    fileInputCompleted = true;
+                }
+            }
 
             submitBtn.Click();
         }
@@ -91,6 +99,8 @@ namespace AutoColoriserNet48
                 element = GetDownloadZipFileElement();
             }
 
+            WriteLog("Finished processing!");
+
             var nameDivs = _chromeDriver.FindElements(By.CssSelector("div.file-name>a"));
             var fileNameContent = nameDivs[0].Text;
             var downloadFileName = fileNameContent.Substring(0, fileNameContent.LastIndexOf('.'));
@@ -103,12 +113,17 @@ namespace AutoColoriserNet48
             // wait for download to finish
             var sw = new Stopwatch();
             sw.Start();
-            while (!File.Exists(downloadFilePath))
+            using (new PeriodicProgressTracking(() =>
+                   {
+                       WriteLog($"Downloading zip file ({Math.Truncate(sw.Elapsed.TotalSeconds)}s)", true);
+                       return Task.CompletedTask;
+                   }))
             {
-                Thread.Sleep(TimeSpan.FromSeconds(1));
-                WriteLog($"Downloading zip file ({Math.Truncate(sw.Elapsed.TotalSeconds)}s)", true);
+                while (!File.Exists(downloadFilePath))
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                }  
             }
-            
             WriteLog("Zip file Downloaded!");
 
             return downloadFilePath;
@@ -120,26 +135,26 @@ namespace AutoColoriserNet48
             IWebElement downloadElement = null;
             var sw = new Stopwatch();
             sw.Start();
-            for (var i = 0; i <= 5; i++)
+            using (new PeriodicProgressTracking(() =>
+                   {
+                       WriteLog($"Processing files using {DPI} dpi ({Math.Truncate(sw.Elapsed.TotalSeconds)}s)", true);
+                       return Task.CompletedTask;
+                   }))
             {
-                var el = _chromeDriver.FindElement(By.Id("downloadZipFile"));
-
-                if (el != null && el.Displayed)
+                while (true)
                 {
-                    WriteLog("Processing Finished!");
-                    downloadElement = el;
-                    break;
+                    IWebElement el = null;
+                    try
+                    {
+                        el = _chromeDriver.FindElement(By.Id("downloadZipFile"));
+                    } catch(WebDriverTimeoutException) {}
+
+                    if (el != null && el.Displayed)
+                    {
+                        return el;
+                    }
                 }
-
-                // use this instead of while loop
-                if (i == 5)
-                    i = 0;
-
-                Thread.Sleep(TimeSpan.FromSeconds(1));
-                WriteLog($"Processing files using {DPI} dpi ({Math.Truncate(sw.Elapsed.TotalSeconds)}s)", true);
             }
-
-            return downloadElement;
         }
 
         private static void ExtractProcessedFiles(string downloadFilePath)
